@@ -1,25 +1,28 @@
-import { useState, useEffect, useRef, ChangeEvent } from "react";
+import { useState, useEffect, useRef } from "react";
+import { fetchCharacters } from "./services/api";
+import { useDebounce } from "./hooks/useDebounce";
+
+import { Character } from "./components/Character/Character";
+
 import "./App.css";
 
 function App() {
   const [searchValue, setSearchValue] = useState("");
   const [characters, setCharacters] = useState([]);
+  const debouncedSearchValue = useDebounce(searchValue, 500);
 
   const handleInputSearch = (event: any) => {
     const { value } = event.target;
     setSearchValue(value);
   };
 
-  const onApiCall = (query: string) => {
-    console.log(`searching: ${query}`);
-  };
-
   useEffect(() => {
     if (!searchValue) return;
 
-    // Call a la api
-    onApiCall(searchValue);
-  }, [searchValue]);
+    fetchCharacters(debouncedSearchValue).then((charactersResult) => {
+      setCharacters(charactersResult);
+    });
+  }, [debouncedSearchValue]);
 
   return (
     <>
@@ -31,22 +34,23 @@ function App() {
           value={searchValue}
           placeholder="Start typing a character name"
         />
-        <button onClick={() => onApiCall(searchValue)}>🔎</button>
+        <button onClick={() => fetchCharacters(searchValue)}>🔎</button>
       </header>
 
       <section className="characters-list">
-        <article className="character">
-          <img
-            src="https://rickandmortyapi.com/api/character/avatar/1.jpeg"
-            alt="Rick Sanchez"
-          />
-          <h2>Rick Sanchez</h2>
-          <div className="character-overlay">
-            <h4>Location: Citadel of Ricks</h4>
-            <h4>Specie: Human</h4>
-            <h4>Status: Alive</h4>
-          </div>
-        </article>
+        {!characters.length && <span>No results</span>}
+
+        {characters?.length > 0 &&
+          characters.map(({ image, name, location, species, status, id }) => (
+            <Character
+              key={id}
+              image={image}
+              name={name}
+              location={location}
+              species={species}
+              status={status}
+            />
+          ))}
       </section>
     </>
   );

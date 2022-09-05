@@ -11,6 +11,7 @@ export const fetchCharacters = (query: string) => {
     .then((response) => response.json())
     .then((charactersList) => {
       controller = null;
-      return charactersList.results;
+
+      return charactersList.results || [];
     });
 };
